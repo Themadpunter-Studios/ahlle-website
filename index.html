@@ -180,9 +180,12 @@ async function fetchClears() {
 }
     function calculateListPoints(rank) {
   let points;
-  if (rank <= 100) {
-    // linear from 100 → 5
-    points = 100 - (95 * (rank - 1)) / 99;
+  if (rank <= 20) {
+    // linear from 100 → 50
+    points = 100 - ((100 - 50) * (rank - 1)) / 19;
+  } else if (rank <= 100) {
+    // linear from 50 → 5
+    points = 50 - ((50 - 5) * (rank - 20)) / 80;
   } else if (rank <= 300) {
     // linear from 5 → 1
     points = 5 - (4 * (rank - 101)) / 199;
@@ -194,6 +197,7 @@ async function fetchClears() {
   }
   return points.toFixed(2);
 }
+
 
 
 
