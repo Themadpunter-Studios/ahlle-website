@@ -7,7 +7,16 @@
 </head>
 <body class="bg-gray-950 text-gray-100 font-sans">
   <div class="max-w-7xl mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-6">Appel Hardest Levels List</h1>
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-bold">Appel Hardest Levels List</h1>
+      <div>
+        <label class="inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="modeToggle" class="sr-only peer">
+          <div class="w-11 h-6 bg-gray-700 rounded-full peer peer-checked:bg-blue-600 relative after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+          <span class="ml-3 text-sm">Compact Mode</span>
+        </label>
+      </div>
+    </div>
 
     <!-- Search + sort -->
     <div class="flex flex-wrap gap-4 mb-6">
@@ -16,8 +25,7 @@
       <select id="sort" class="p-2 rounded bg-gray-800 border border-gray-700 text-sm">
         <option value="Rank">Sort by Rank</option>
         <option value="Level">Sort by Level</option>
-        <option value="Creator(s)">Sort by Creator</option>
-        <option value="Difficulty">Sort by Difficulty</option>
+        <option value="Creator">Sort by Creator</option>
       </select>
     </div>
 
@@ -40,13 +48,15 @@
 
   <!-- Modal -->
   <div id="modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
-    <div class="bg-gray-900 rounded-2xl shadow-xl max-w-lg w-full p-6 relative">
+    <div class="bg-gray-900 rounded-2xl shadow-xl max-w-2xl w-full p-6 relative">
       <button id="closeModal" class="absolute top-3 right-3 text-gray-400 hover:text-gray-200">&times;</button>
-      <h2 id="modalTitle" class="text-xl font-bold mb-4"></h2>
+      <h2 id="modalTitle" class="text-2xl font-bold mb-4"></h2>
+      <p><span class="font-semibold">AHHLE ID:</span> <span id="modalID"></span></p>
       <p><span class="font-semibold">Verifier:</span> <span id="modalVerifier"></span></p>
       <p><span class="font-semibold">CWR:</span> <span id="modalCWR"></span></p>
       <p><span class="font-semibold">Notes:</span></p>
-      <p id="modalNotes" class="text-gray-300 mt-2"></p>
+      <p id="modalNotes" class="text-gray-300 mt-2 mb-4"></p>
+      <div id="modalMedia" class="mt-4"></div>
     </div>
   </div>
 
@@ -56,9 +66,12 @@
     const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${SHEET_NAME}&tqx=out:json`;
 
     let levels = [];
+    let aestheticMode = false;
+
     const table = document.getElementById("levelTable");
     const searchInput = document.getElementById("search");
     const sortSelect = document.getElementById("sort");
+    const modeToggle = document.getElementById("modeToggle");
 
     // Modal elements
     const modal = document.getElementById("modal");
@@ -67,6 +80,8 @@
     const modalVerifier = document.getElementById("modalVerifier");
     const modalCWR = document.getElementById("modalCWR");
     const modalNotes = document.getElementById("modalNotes");
+    const modalID = document.getElementById("modalID");
+    const modalMedia = document.getElementById("modalMedia");
 
     closeModal.addEventListener("click", () => modal.classList.add("hidden"));
     modal.addEventListener("click", (e) => {
@@ -78,7 +93,6 @@
         const res = await fetch(URL);
         const text = await res.text();
         const json = JSON.parse(text.substr(47).slice(0, -2));
-
         const cols = json.table.cols.map(c => c.label);
         return json.table.rows.map(row => {
           let obj = {};
@@ -94,47 +108,97 @@
     }
 
     function renderTable(data) {
-      table.innerHTML = "";
-      data.forEach(lvl => {
-        const row = document.createElement("tr");
-        row.className = "hover:bg-gray-800 cursor-pointer";
-        row.innerHTML = `
-          <td class="px-3 py-2">${lvl.Rank || ""}</td>
-          <td class="px-3 py-2 font-medium">${lvl.Level || ""}</td>
-          <td class="px-3 py-2">${lvl["Creator(s)"] || ""}</td>
-          <td class="px-3 py-2">${lvl.Difficulty || ""}</td>
-          <td class="px-3 py-2">
-            ${lvl.Video && lvl.Video.trim() !== "-" 
-              ? `<a href="${lvl.Video}" target="_blank" class="text-blue-400 underline">Watch</a>` 
-              : ""}
-          </td>
-        `;
-        row.addEventListener("click", () => {
-          modalTitle.textContent = lvl.Level || "Unknown Level";
-          modalVerifier.textContent = lvl["Verifier/First Victor"] || "N/A";
-          modalCWR.textContent = lvl["CWR (mostly from sr.c)"] || "N/A";
-          modalNotes.textContent = lvl.Notes || "N/A";
-          modal.classList.remove("hidden");
-        });
-        table.appendChild(row);
-      });
+  table.innerHTML = "";
+  data.forEach(lvl => {
+    const row = document.createElement("tr");
+    row.className = "hover:bg-gray-800 cursor-pointer";
+
+    const videoLink = lvl.Video && lvl.Video.trim() !== "-" ? lvl.Video : "";
+    let thumb = "";
+
+    // Always show thumbnail if NOT in Compact Mode
+    if (!aestheticMode && lvl["ID"]) {
+      thumb = `thumbnails/${lvl["ID"]}.0.png`;
     }
 
-    function filterAndSort() {
-      const query = searchInput.value.toLowerCase();
-      let filtered = levels.filter(lvl =>
-        (lvl.Level || "").toLowerCase().includes(query) ||
-        (lvl["Creator(s)"] || "").toLowerCase().includes(query)
-      );
-      const sortKey = sortSelect.value;
-      filtered.sort((a, b) =>
-        (a[sortKey] || "").toString().localeCompare((b[sortKey] || "").toString(), undefined, {numeric:true})
-      );
-      renderTable(filtered);
+    // Fallback to YouTube thumbnail if not in Compact Mode
+    if (!thumb && !aestheticMode && videoLink.includes("youtube")) {
+      const id = videoLink.split("v=")[1]?.split("&")[0];
+      thumb = id ? `https://img.youtube.com/vi/${id}/mqdefault.jpg` : "";
     }
 
-    searchInput.addEventListener("input", filterAndSort);
-    sortSelect.addEventListener("change", filterAndSort);
+    // Fallback placeholder if not in Compact Mode
+    if (!thumb && !aestheticMode) thumb = "https://via.placeholder.com/120x90?text=No+Preview";
+
+    const compactClass = aestheticMode ? "px-3 py-2" : "px-3 py-2"; // adjust if you want smaller padding in compact
+
+    row.innerHTML = `
+      <td class="${compactClass}">${lvl.Rank || ""}</td>
+      <td class="${compactClass} font-medium flex items-center gap-2">
+        ${!aestheticMode && thumb ? `<img src="${thumb}" class="w-48 h-36 rounded object-cover">` : ""}
+        ${lvl.Level || ""}
+      </td>
+      <td class="${compactClass}">${lvl["Creator(s)"] || ""}</td>
+      <td class="${compactClass}">${lvl.Difficulty || ""}</td>
+      <td class="${compactClass}">
+        ${videoLink ? `<a href="${videoLink}" target="_blank" class="text-blue-400 underline">Watch</a>` : ""}
+      </td>
+    `;
+
+    row.addEventListener("click", () => {
+      modalTitle.textContent = lvl.Level || "Unknown Level";
+      modalID.textContent = lvl["ID"] || "N/A";
+      modalVerifier.textContent = lvl["Verifier/First Victor"] || "N/A";
+      modalCWR.textContent = lvl["CWR (mostly from sr.c)"] || "N/A";
+      modalNotes.textContent = lvl.Notes || "N/A";
+
+      if (videoLink) {
+        const id = videoLink.split("v=")[1]?.split("&")[0];
+        modalMedia.innerHTML = id
+          ? `<iframe width="100%" height="315" src="https://www.youtube.com/embed/${id}" frameborder="0" allowfullscreen></iframe>`
+          : `<a href="${videoLink}" target="_blank" class="text-blue-400 underline">Watch Video</a>`;
+      } else {
+        modalMedia.innerHTML = `<img src="https://via.placeholder.com/640x360?text=No+Video+Available" class="rounded">`;
+      }
+
+      modal.classList.remove("hidden");
+    });
+
+    table.appendChild(row);
+  });
+}
+
+    const SORT_MAP = {
+  "Rank": "Rank",
+  "Level": "Level",
+  "Creator": "Creator(s)"
+};
+
+function filterAndSort() {
+  const query = searchInput.value.toLowerCase();
+  const sortKey = SORT_MAP[sortSelect.value] || "Rank";
+
+  const filtered = levels
+    .filter(lvl =>
+      (lvl.Level || "").toLowerCase().includes(query) ||
+      (lvl["Creator(s)"] || "").toLowerCase().includes(query)
+    )
+    .sort((a, b) => {
+      const aVal = (a[sortKey] || "").toString();
+      const bVal = (b[sortKey] || "").toString();
+      return aVal.localeCompare(bVal, undefined, {numeric: true, sensitivity: 'base'});
+    });
+
+  renderTable(filtered);
+}
+
+// Event listeners
+searchInput.addEventListener("input", filterAndSort);
+sortSelect.addEventListener("change", filterAndSort);
+modeToggle.addEventListener("change", () => {
+  aestheticMode = modeToggle.checked;
+  filterAndSort();
+});
 
     (async () => {
       levels = await fetchLevels();
