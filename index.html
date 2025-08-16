@@ -1,351 +1,477 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Appel Hardest Levels List</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-950 text-gray-100 font-sans">
-  <div class="max-w-7xl mx-auto p-6">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-3xl font-bold">Appel Hardest Levels List</h1>
-      <div>
-        <label class="inline-flex items-center cursor-pointer">
-          <input type="checkbox" id="modeToggle" class="sr-only peer">
-          <div class="w-11 h-6 bg-gray-700 rounded-full peer peer-checked:bg-blue-600 relative after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
-          <span class="ml-3 text-sm">Compact Mode</span>
-        </label>
+  <head>
+    <meta charset="UTF-8">
+    <title>Appel Hardest Levels List</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  </head>
+  <body class="bg-gray-950 text-gray-100 font-sans">
+    <div class="max-w-7xl mx-auto p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">Appel Hardest Levels List</h1>
+        <div>
+          <label class="inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="modeToggle" class="sr-only peer">
+            <div class="w-11 h-6 bg-gray-700 rounded-full peer peer-checked:bg-blue-600 relative after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+            <span class="ml-3 text-sm">Compact Mode</span>
+          </label>
+        </div>
+      </div>
+      <p>The Appel Hardest Levels List: Extended is a ranking of all difficult Appel levels. This website accesses the original <a href="https://docs.google.com/spreadsheets/d/1q01STuHSABJcptgHRmfFeXzkhFRtY6ymurO9uxkflfQ/edit">Google Sheet</a> where the AHLL:E is stored and shows the levels in a sortable format. </p>
+      <br>
+      <!-- Search + sort -->
+      <div class="flex flex-wrap gap-4 mb-6">
+        <input type="text" id="search" placeholder="Search levels..." class="p-2 rounded bg-gray-800 border border-gray-700 text-sm w-64">
+        <select id="sort" class="p-2 rounded bg-gray-800 border border-gray-700 text-sm">
+          <option value="Rank">Sort by Rank</option>
+          <option value="Level">Sort by Level</option>
+          <option value="Creator">Sort by Creator</option>
+        </select>
+        <button id="rulesButton" class="p-2 rounded bg-gray-600 hover:bg-blue-700 text-white text-sm"> Rules </button>
+        <button id="leaderboardButton" class="p-2 rounded bg-gray-600 hover:bg-blue-700 text-white text-sm ml-2">
+          Leaderboard
+        </button>
+
+      </div>
+      <!-- Table -->
+      <div class="overflow-x-auto rounded-lg shadow">
+        <table class="min-w-full border-collapse">
+          <thead class="bg-gray-800">
+            <tr>
+              <th class="px-3 py-2 text-left text-sm font-semibold">Rank</th>
+              <th class="px-3 py-2 text-left text-sm font-semibold">Level</th>
+              <th class="px-3 py-2 text-left text-sm font-semibold">Creator(s)</th>
+              <th class="px-3 py-2 text-left text-sm font-semibold">Difficulty</th>
+              <th class="px-3 py-2 text-left text-sm font-semibold">List Points</th>
+            </tr>
+          </thead>
+          <tbody id="levelTable" class="divide-y divide-gray-700"></tbody>
+        </table>
       </div>
     </div>
-    <p>The Appel Hardest Levels List: Extended is a ranking of all difficult Appel levels. This website accesses the original <a href="https://docs.google.com/spreadsheets/d/1q01STuHSABJcptgHRmfFeXzkhFRtY6ymurO9uxkflfQ/edit">Google Sheet</a> where the 
-    AHLL:E is stored and shows the levels in a sortable format.</p>
-    <br>
-
-
-    <!-- Search + sort -->
-    <div class="flex flex-wrap gap-4 mb-6">
-      <input type="text" id="search" placeholder="Search levels..."
-        class="p-2 rounded bg-gray-800 border border-gray-700 text-sm w-64">
-      <select id="sort" class="p-2 rounded bg-gray-800 border border-gray-700 text-sm">
-        <option value="Rank">Sort by Rank</option>
-        <option value="Level">Sort by Level</option>
-        <option value="Creator">Sort by Creator</option>
-      </select>
-      <button id="rulesButton" class="p-2 rounded bg-gray-600 hover:bg-blue-700 text-white text-sm">
-        Rules
-    </button>
+    <!-- Modal -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
+      <div class="bg-gray-900 rounded-2xl shadow-xl max-w-4xl w-full max-h-[80vh] p-10 relative overflow-y-auto">
+        <button id="closeModal" class="absolute top-3 right-3 text-gray-400 hover:text-gray-200">&times;</button>
+        <h2 id="modalTitle" class="text-2xl font-bold mb-4"></h2>
+        <p>
+          <span class="font-semibold">AHHLE ID:</span>
+          <span id="modalID"></span>
+        </p>
+        <p>
+          <span class="font-semibold">Verifier:</span>
+          <span id="modalVerifier"></span>
+        </p>
+        <p>
+          <span class="font-semibold">CWR:</span>
+          <span id="modalCWR"></span>
+        </p>
+        <p>
+          <span class="font-semibold">Level Code:</span>
+          <span id="modalCode" class="cursor-pointer text-blue-400 underline block w-1/2 truncate" title="Click to copy">N/A</span>
+        </p>
+        <p>
+          <span class="font-semibold">Cleared By:</span>
+        </p>
+        <div id="modalClearedBy" class="text-gray-300 mt-1 mb-4"></div>
+        <p>
+          <span class="font-semibold">Notes:</span>
+        </p>
+        <p id="modalNotes" class="text-gray-300 mt-2 mb-4"></p>
+        <div id="modalMedia" class="mt-4"></div>
+      </div>
     </div>
-
-    <!-- Table -->
-    <div class="overflow-x-auto rounded-lg shadow">
-      <table class="min-w-full border-collapse">
-        <thead class="bg-gray-800">
-          <tr>
-            <th class="px-3 py-2 text-left text-sm font-semibold">Rank</th>
-            <th class="px-3 py-2 text-left text-sm font-semibold">Level</th>
-            <th class="px-3 py-2 text-left text-sm font-semibold">Creator(s)</th>
-            <th class="px-3 py-2 text-left text-sm font-semibold">Difficulty</th>
-            <th class="px-3 py-2 text-left text-sm font-semibold">List Points</th>
-          </tr>
-        </thead>
-        <tbody id="levelTable" class="divide-y divide-gray-700"></tbody>
-      </table>
+    <!-- Player Modal -->
+    <div id="playerModal" class="fixed inset-0 hidden bg-black/50 flex items-center justify-center z-50">
+      <div class="bg-gray-900 rounded-2xl shadow-xl max-w-4xl w-full max-h-[80vh] p-10 relative overflow-y-auto">
+        <button id="closePlayerModal" class="absolute top-3 right-3 text-gray-400 hover:text-gray-200">&times;</button>
+        <h2 id="playerName" class="text-xl font-bold mb-4">Player Stats</h2>
+        <p><strong>Total Clears:</strong> <span id="playerClearsCount">0</span></p>
+        <p><strong>Total Points:</strong> <span id="playerPoints">0</span></p>
+        <ul id="playerClearsList" class="list-disc ml-5 mt-3 space-y-1"></ul>
+      </div>
     </div>
-  </div>
-
-  <!-- Modal -->
-<div id="modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
-  <div class="bg-gray-900 rounded-2xl shadow-xl max-w-4xl w-full max-h-[80vh] p-10 relative overflow-y-auto">
-    <button id="closeModal" class="absolute top-3 right-3 text-gray-400 hover:text-gray-200">&times;</button>
-    <h2 id="modalTitle" class="text-2xl font-bold mb-4"></h2>
-    <p><span class="font-semibold">AHHLE ID:</span> <span id="modalID"></span></p>
-    <p><span class="font-semibold">Verifier:</span> <span id="modalVerifier"></span></p>
-    <p><span class="font-semibold">CWR:</span> <span id="modalCWR"></span></p>
-    <p><span class="font-semibold">Level Code:</span> 
-      <span id="modalCode" class="cursor-pointer text-blue-400 underline block w-1/2 truncate" title="Click to copy">N/A</span>
-    </p>
-    <p><span class="font-semibold">Cleared By:</span></p>
-    <div id="modalClearedBy" class="text-gray-300 mt-1 mb-4"></div>
-    <p><span class="font-semibold">Notes:</span></p>
-    <p id="modalNotes" class="text-gray-300 mt-2 mb-4"></p>
-    <div id="modalMedia" class="mt-4"></div>
-  </div>
-</div>
-
-
-  <div id="rulesModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
-  <div class="bg-gray-900 rounded-2xl shadow-xl max-w-3xl w-full p-8 relative">
-    <button id="closeRules" class="absolute top-3 right-3 text-gray-400 hover:text-gray-200">&times;</button>
-    <h2 class="text-2xl font-bold mb-4">Rules for Levels</h2>
-    <ul class="list-disc list-inside text-gray-200 space-y-2">
-      <li>Level code or mod must be provided.</li>
-      <li>Level must be verified (provide replay or video evidence).</li>
-      <li>Gameplay must be "good". This means it must have gameplay that is repetitive, blind, or trolly and makes it unenjoyable.</li>
-      <li>Levels should preferrably be decorated.</li>
-      <li>Levels are usually rated by their decheesed version of one exists.</li>
-      <li>Long level names should include acronyms.</li>
-      <li>Buffed versions of levels, low quality, or repetitive levels will be placed on the Appel Challenge Level List.</li>
-    </ul>
-    <br>
-     <h2 class="text-2xl font-bold mb-4">Rules for Submissions</h2>
-    <ul class="list-disc list-inside text-gray-200 space-y-2">
-      <li>Replay evidence should be provided.</li>
-      <li>Use a vanilla or moderator-accepted version of Appel, or the mod the level came from.</li>
-      <li>Do not use external tools to cheat (TAS, macros, low FPS abuse, etc.) You must have played the level yourself by hand.</li>
-      <li>Modifying the code to gain an advantage is not allowed.</li>
-      <li>Video or replay code proof required for completions of Top 50 levels.</li>
-      <li>Replay continuation (starting the level at a checkpoint you have previously reached) is allowed as long as the level has no softlocks.</li>
-      <li>A video of the whole completion must be shown if replay continuation is used.</li>
-    </ul>
-  </div>
-</div>
-
-
-  <script>
-    const SHEET_ID = "1q01STuHSABJcptgHRmfFeXzkhFRtY6ymurO9uxkflfQ"; 
-    const SHEET_NAME = "AHHL:E"; 
-    const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${SHEET_NAME}&tqx=out:json`;
-
-    let levels = [];
-    let aestheticMode = false;
-
-    const table = document.getElementById("levelTable");
-    const searchInput = document.getElementById("search");
-    const sortSelect = document.getElementById("sort");
-    const modeToggle = document.getElementById("modeToggle");
-
-    // Modal elements
-    const modal = document.getElementById("modal");
-    const closeModal = document.getElementById("closeModal");
-    const modalTitle = document.getElementById("modalTitle");
-    const modalVerifier = document.getElementById("modalVerifier");
-    const modalCWR = document.getElementById("modalCWR");
-    const modalNotes = document.getElementById("modalNotes");
-    const modalID = document.getElementById("modalID");
-    const modalMedia = document.getElementById("modalMedia");
-
-    
-
-    closeModal.addEventListener("click", () => modal.classList.add("hidden"));
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) modal.classList.add("hidden");
-    });
-
-    const rulesButton = document.getElementById("rulesButton");
-    const rulesModal = document.getElementById("rulesModal");
-    const closeRules = document.getElementById("closeRules");
-
-    rulesButton.addEventListener("click", () => rulesModal.classList.remove("hidden"));
-    closeRules.addEventListener("click", () => rulesModal.classList.add("hidden"));
-    rulesModal.addEventListener("click", (e) => {
-    if (e.target === rulesModal) rulesModal.classList.add("hidden");
-    });
-
-   let clearsMap = {}; // key: ID, value: array of usernames
-
-async function fetchClears() {
-    const CLEAR_SHEET_NAME = "data"; // replace with your sheet if different
-    const CLEAR_URL = `https://docs.google.com/spreadsheets/d/13S8NwstYejfWzZahhB_Ch8HrpsZLuIIZ161QwLM7fl4/gviz/tq?sheet=${CLEAR_SHEET_NAME}&tqx=out:json`;
-
-    try {
-        const res = await fetch(CLEAR_URL);
-        const text = await res.text();
-        const json = JSON.parse(text.substr(47).slice(0, -2));
-
-        json.table.rows.forEach(row => {
-    const id = row.c[8]?.v;  // keep ID in column A (index 0)
-    const cell = row.c[9];   // column J (index 9) for clears
-    let users = "";
-
-    if (cell) {
-        // If the cell has a value, get it as a string
-        if (typeof cell.v === "string") {
-            users = cell.v;
-        } else if (typeof cell.v === "number") {
-            users = String(cell.v);
-        } else {
-            // fallback
-            users = "";
-        }
-    }
-
-    if (id) {
-        clearsMap[id] = users.split(", ").map(u => u.trim()).filter(Boolean);
-    }
-});
-
-    } catch (err) {
-        console.error("Failed to fetch clears:", err);
-    }
-}
-    function calculateListPoints(rank) {
-  let points;
-  if (rank <= 20) {
-    // linear from 100 → 50
-    points = 100 - ((100 - 50) * (rank - 1)) / 19;
-  } else if (rank <= 100) {
-    // linear from 50 → 5
-    points = 50 - ((50 - 5) * (rank - 20)) / 80;
-  } else if (rank <= 300) {
-    // linear from 5 → 1
-    points = 5 - (4 * (rank - 101)) / 199;
-  } else if (rank <= 450) {
-    // linear from 1 → 0.05
-    points = 1 - (0.95 * (rank - 301)) / 149;
-  } else {
-    points = 0;
-  }
-  return points.toFixed(2);
-}
-
-
-
-
-
-
-    async function fetchLevels() {
-      try {
-        const res = await fetch(URL);
-        const text = await res.text();
-        const json = JSON.parse(text.substr(47).slice(0, -2));
-        const cols = json.table.cols.map(c => c.label);
-        return json.table.rows.map(row => {
-          let obj = {};
-          row.c.forEach((cell, i) => {
-            obj[cols[i]] = cell ? cell.v : "";
+    <!-- Leaderboard Modal -->
+    <div id="leaderboardModal" class="fixed inset-0 hidden bg-black/50 flex items-center justify-center z-50">
+      <div class="bg-gray-900 rounded-2xl shadow-xl max-w-4xl w-full max-h-[80vh] p-10 relative overflow-y-auto">
+        <button id="closeLeaderboardModal" class="absolute top-3 right-3 text-gray-400 hover:text-gray-200">&times;</button>
+        <h2 class="text-xl font-bold mb-4">Leaderboard</h2>
+        <table class="min-w-full border-collapse">
+          <thead class="bg-gray-800">
+            <tr>
+              <th class="px-3 py-2 text-left text-sm font-semibold">Rank</th>
+              <th class="px-3 py-2 text-left text-sm font-semibold">Player</th>
+              <th class="px-3 py-2 text-left text-sm font-semibold">Points</th>
+              <th class="px-3 py-2 text-left text-sm font-semibold">Total Clears</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardTable" class="divide-y divide-gray-700"></tbody>
+        </table>
+      </div>
+    </div>
+    <!-- Rules Modal-->
+    <div id="rulesModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
+      <div class="bg-gray-900 rounded-2xl shadow-xl max-w-3xl w-full p-8 relative">
+        <button id="closeRules" class="absolute top-3 right-3 text-gray-400 hover:text-gray-200">&times;</button>
+        <h2 class="text-2xl font-bold mb-4">Rules for Levels</h2>
+        <ul class="list-disc list-inside text-gray-200 space-y-2">
+          <li>Level code or mod must be provided.</li>
+          <li>Level must be verified (provide replay or video evidence).</li>
+          <li>Gameplay must be "good". This means it must have gameplay that is repetitive, blind, or trolly and makes it unenjoyable.</li>
+          <li>Levels should preferrably be decorated.</li>
+          <li>Levels are usually rated by their decheesed version of one exists.</li>
+          <li>Long level names should include acronyms.</li>
+          <li>Buffed versions of levels, low quality, or repetitive levels will be placed on the Appel Challenge Level List.</li>
+        </ul>
+        <br>
+        <h2 class="text-2xl font-bold mb-4">Rules for Submissions</h2>
+        <ul class="list-disc list-inside text-gray-200 space-y-2">
+          <li>Replay evidence should be provided.</li>
+          <li>Use a vanilla or moderator-accepted version of Appel, or the mod the level came from.</li>
+          <li>Do not use external tools to cheat (TAS, macros, low FPS abuse, etc.) You must have played the level yourself by hand.</li>
+          <li>Modifying the code to gain an advantage is not allowed.</li>
+          <li>Video or replay code proof required for completions of Top 50 levels.</li>
+          <li>Replay continuation (starting the level at a checkpoint you have previously reached) is allowed as long as the level has no softlocks.</li>
+          <li>A video of the whole completion must be shown if replay continuation is used.</li>
+        </ul>
+      </div>
+    </div>
+    <script>
+      const SHEET_ID = "1q01STuHSABJcptgHRmfFeXzkhFRtY6ymurO9uxkflfQ";
+      const SHEET_NAME = "AHHL:E";
+      const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${SHEET_NAME}&tqx=out:json`;
+      let levels = [];
+      let aestheticMode = false;
+      const table = document.getElementById("levelTable");
+      const searchInput = document.getElementById("search");
+      const sortSelect = document.getElementById("sort");
+      const modeToggle = document.getElementById("modeToggle");
+      // Modal elements
+      const modal = document.getElementById("modal");
+      const closeModal = document.getElementById("closeModal");
+      const modalTitle = document.getElementById("modalTitle");
+      const modalVerifier = document.getElementById("modalVerifier");
+      const modalCWR = document.getElementById("modalCWR");
+      const modalNotes = document.getElementById("modalNotes");
+      const modalID = document.getElementById("modalID");
+      const modalMedia = document.getElementById("modalMedia");
+      closeModal.addEventListener("click", () => modal.classList.add("hidden"));
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) modal.classList.add("hidden");
+      });
+      const rulesButton = document.getElementById("rulesButton");
+      const rulesModal = document.getElementById("rulesModal");
+      const closeRules = document.getElementById("closeRules");
+      rulesButton.addEventListener("click", () => rulesModal.classList.remove("hidden"));
+      closeRules.addEventListener("click", () => rulesModal.classList.add("hidden"));
+      rulesModal.addEventListener("click", (e) => {
+        if (e.target === rulesModal) rulesModal.classList.add("hidden");
+      });
+      let clearsMap = {}; // key: ID, value: array of usernames
+      async function fetchClears() {
+        const CLEAR_SHEET_NAME = "data"; // replace with your sheet if different
+        const CLEAR_URL = `https://docs.google.com/spreadsheets/d/13S8NwstYejfWzZahhB_Ch8HrpsZLuIIZ161QwLM7fl4/gviz/tq?sheet=${CLEAR_SHEET_NAME}&tqx=out:json`;
+        try {
+          const res = await fetch(CLEAR_URL);
+          const text = await res.text();
+          const json = JSON.parse(text.substr(47).slice(0, -2));
+          json.table.rows.forEach(row => {
+            const id = row.c[8]?.v; // keep ID in column A (index 0)
+            const cell = row.c[9]; // column J (index 9) for clears
+            let users = "";
+            if (cell) {
+              // If the cell has a value, get it as a string
+              if (typeof cell.v === "string") {
+                users = cell.v;
+              } else if (typeof cell.v === "number") {
+                users = String(cell.v);
+              } else {
+                // fallback
+                users = "";
+              }
+            }
+            if (id) {
+              clearsMap[id] = users.split(", ").map(u => u.trim()).filter(Boolean);
+            }
           });
-          return obj;
-        });
-      } catch (err) {
-        console.error("Failed to fetch sheet:", err);
-        return [];
+        } catch (err) {
+          console.error("Failed to fetch clears:", err);
+        }
       }
-    }
 
-    function renderTable(data) {
-  table.innerHTML = "";
-  data.forEach(lvl => {
-    const row = document.createElement("tr");
-    row.className = "hover:bg-gray-800 cursor-pointer";
-
-    const videoLink = lvl.Video && lvl.Video.trim() !== "-" ? lvl.Video : "";
-    let thumb = "";
-
-    // Always show thumbnail if NOT in Compact Mode
-    if (!aestheticMode && lvl["ID"]) {
-      thumb = `thumbnails/${lvl["ID"]}.0.png`;
-    }
-
-    // Fallback to YouTube thumbnail if not in Compact Mode
-    if (!thumb && !aestheticMode && videoLink.includes("youtube")) {
-      const id = videoLink.split("v=")[1]?.split("&")[0];
-      thumb = id ? `https://img.youtube.com/vi/${id}/mqdefault.jpg` : "";
-    }
-
-    // Fallback placeholder if not in Compact Mode
-    if (!thumb && !aestheticMode) thumb = "noimage.svg";
-
-    const compactClass = aestheticMode ? "px-3 py-2" : "px-3 py-2"; // adjust if you want smaller padding in compact
-
-    row.innerHTML = `
-      <td class="${compactClass}">${lvl.Rank || ""}</td>
-      <td class="${compactClass} font-medium flex items-center gap-2">
-        ${!aestheticMode && thumb ? `<img src="${thumb}" class="w-48 h-36 rounded object-cover">` : ""}
-        ${lvl.Level || ""}
-      </td>
-      <td class="${compactClass}">${lvl["Creator(s)"] || ""}</td>
-      <td class="${compactClass}">${lvl.Difficulty || ""}</td>
-      <td class="${compactClass}">${calculateListPoints(lvl.Rank)}</td>
-    `;
-
-    row.addEventListener("click", () => {
-      modalTitle.textContent = lvl.Level || "Unknown Level";
-      modalID.textContent = lvl["ID"] || "N/A";
-      modalVerifier.textContent = lvl["Verifier/First Victor"] || "N/A";
-      modalCWR.textContent = lvl["CWR (mostly from sr.c)"] || "N/A";
-      modalNotes.textContent = lvl.Notes || "N/A";
-      modalCode.textContent = lvl["Level Code"] || "N/A";
-      // Clear previous content
-        modalClearedBy.innerHTML = ""; 
-
-        const clears = clearsMap[lvl["ID"]] || [];
-
-        if (clears.length === 0) {
-            modalClearedBy.textContent = "None";
+      function calculateListPoints(rank) {
+        let points;
+        if (rank <= 20) {
+          // linear from 100 → 50
+          points = 100 - ((100 - 50) * (rank - 1)) / 19;
+        } else if (rank <= 100) {
+          // linear from 50 → 5
+          points = 50 - ((50 - 5) * (rank - 20)) / 80;
+        } else if (rank <= 300) {
+          // linear from 5 → 1
+          points = 5 - (4 * (rank - 101)) / 199;
+        } else if (rank <= 450) {
+          // linear from 1 → 0.05
+          points = 1 - (0.95 * (rank - 301)) / 149;
         } else {
-            const ul = document.createElement("ul");
-            ul.className = "list-disc list-inside"; // optional Tailwind styling
-            clears.forEach(user => {
-                const li = document.createElement("li");
-                li.textContent = user;
-                ul.appendChild(li);
+          points = 0;
+        }
+        return points.toFixed(2);
+      }
+      async function fetchLevels() {
+        try {
+          const res = await fetch(URL);
+          const text = await res.text();
+          const json = JSON.parse(text.substr(47).slice(0, -2));
+          const cols = json.table.cols.map(c => c.label);
+          return json.table.rows.map(row => {
+            let obj = {};
+            row.c.forEach((cell, i) => {
+              obj[cols[i]] = cell ? cell.v : "";
             });
-            modalClearedBy.appendChild(ul);
+            return obj;
+          });
+        } catch (err) {
+          console.error("Failed to fetch sheet:", err);
+          return [];
+        }
+      }
+
+      function openLevelModal(lvl) {
+        closeAllModals();
+
+        const videoLink = lvl.Video && lvl.Video.trim() !== "-" ? lvl.Video : "";
+
+        // Fill modal fields
+        modalTitle.textContent = lvl.Level || "Unknown Level";
+        modalID.textContent = lvl["ID"] || "N/A";
+        modalVerifier.textContent = lvl["Verifier/First Victor"] || "N/A";
+        modalCWR.textContent = lvl["CWR (mostly from sr.c)"] || "N/A";
+        modalNotes.textContent = lvl.Notes || "N/A";
+        modalCode.textContent = lvl["Level Code"] || "N/A";
+
+        // Clears list with clickable players
+        modalClearedBy.innerHTML = "";
+        (clearsMap[lvl["ID"]] || []).forEach(user => {
+          const li = document.createElement("li");
+          const a = document.createElement("a");
+          a.href = "#";
+          a.textContent = user;
+          a.className = "text-blue-500 hover:underline";
+          a.onclick = (e) => {
+            e.preventDefault();
+            openPlayerModal(user);
+          };
+          li.appendChild(a);
+          modalClearedBy.appendChild(li);
+        });
+
+        // Copy level code
+        modalCode.onclick = () => {
+          if (lvl["Level Code"]) {
+            navigator.clipboard.writeText(lvl["Level Code"]).then(() => {
+              modalCode.textContent = "Copied!";
+              setTimeout(() => modalCode.textContent = lvl["Level Code"], 1000);
+            });
+          }
+        };
+
+        // Video / thumbnail
+        if (videoLink) {
+          const id = videoLink.split("v=")[1]?.split("&")[0];
+          modalMedia.innerHTML = id
+            ? `<iframe width="560" height="315" src="https://www.youtube.com/embed/${id}" frameborder="0" allowfullscreen></iframe>`
+            : `<a href="${videoLink}" target="_blank" class="text-blue-400 underline">Watch Video</a>`;
+        } else {
+          modalMedia.innerHTML = "";
         }
 
-
-    modalCode.onclick = () => {
-    if (lvl.Code) {
-        navigator.clipboard.writeText(lvl.Code).then(() => {
-        modalCode.textContent = "Copied!";
-        setTimeout(() => modalCode.textContent = lvl.Code, 1000);
-        });
-    }
-    };
-
-      if (videoLink) {
-        const id = videoLink.split("v=")[1]?.split("&")[0];
-        modalMedia.innerHTML = id
-          ? `<iframe width="560" height="315" src="https://www.youtube.com/embed/${id}" frameborder="0" allowfullscreen></iframe>`
-          : `<a href="${videoLink}" target="_blank" class="text-blue-400 underline">Watch Video</a>`;
-      } else {
-        modalMedia.innerHTML = ``;
+        // Show modal
+        modal.classList.remove("hidden");
       }
 
-      modal.classList.remove("hidden");
-    });
+      function closeAllModals() {
+        document.getElementById("modal").classList.add("hidden");
+        document.getElementById("playerModal").classList.add("hidden");
+        document.getElementById("rulesModal").classList.add("hidden");
+        document.getElementById("leaderboardModal").classList.add("hidden");
 
-    table.appendChild(row);
-  });
-}
+      }
 
-    const SORT_MAP = {
-  "Rank": "Rank",
-  "Level": "Level",
-  "Creator": "Creator(s)"
-};
 
-function filterAndSort() {
-  const query = searchInput.value.toLowerCase();
-  const sortKey = SORT_MAP[sortSelect.value] || "Rank";
 
-  const filtered = levels
-    .filter(lvl =>
-      (lvl.Level || "").toLowerCase().includes(query) ||
-      (lvl["Creator(s)"] || "").toLowerCase().includes(query)
-    )
-    .sort((a, b) => {
-      const aVal = (a[sortKey] || "").toString();
-      const bVal = (b[sortKey] || "").toString();
-      return aVal.localeCompare(bVal, undefined, {numeric: true, sensitivity: 'base'});
-    });
+      function renderTable(data) {
+        table.innerHTML = "";
+        data.forEach(lvl => {
+          const row = document.createElement("tr");
+          row.className = "hover:bg-gray-800 cursor-pointer";
+          const videoLink = lvl.Video && lvl.Video.trim() !== "-" ? lvl.Video : "";
+          let thumb = "";
+          // Always show thumbnail if NOT in Compact Mode
+          if (!aestheticMode && lvl["ID"]) {
+            thumb = `thumbnails/${lvl["ID"]}.0.png`;
+          }
+          // Fallback to YouTube thumbnail if not in Compact Mode
+          if (!thumb && !aestheticMode && videoLink.includes("youtube")) {
+            const id = videoLink.split("v=")[1]?.split("&")[0];
+            thumb = id ? `https://img.youtube.com/vi/${id}/mqdefault.jpg` : "";
+          }
+          // Fallback placeholder if not in Compact Mode
+          if (!thumb && !aestheticMode) thumb = "noimage.svg";
+          const compactClass = aestheticMode ? "px-3 py-2" : "px-3 py-2"; // adjust if you want smaller padding in compact
+          row.innerHTML = `
+      
+								<td class="${compactClass}">${lvl.Rank || ""}</td>
+								<td class="${compactClass} font-medium flex items-center gap-2">
+        ${!aestheticMode && thumb ? `
+									<img src="${thumb}" class="w-48 h-36 rounded object-cover">` : ""}
+        ${lvl.Level || ""}
+      
+									</td>
+									<td class="${compactClass}">${lvl["Creator(s)"] || ""}</td>
+									<td class="${compactClass}">${lvl.Difficulty || ""}</td>
+									<td class="${compactClass}">${calculateListPoints(lvl.Rank)}</td>
+    `;
+          row.addEventListener("click", () => openLevelModal(lvl));
 
-  renderTable(filtered);
-}
+          table.appendChild(row);
+        });
+      }
+      const SORT_MAP = {
+        "Rank": "Rank",
+        "Level": "Level",
+        "Creator": "Creator(s)"
+      };
 
-// Event listeners
-searchInput.addEventListener("input", filterAndSort);
-sortSelect.addEventListener("change", filterAndSort);
-modeToggle.addEventListener("change", () => {
-  aestheticMode = modeToggle.checked;
-  filterAndSort();
-});
+      function filterAndSort() {
+        const query = searchInput.value.toLowerCase();
+        const sortKey = SORT_MAP[sortSelect.value] || "Rank";
+        const filtered = levels.filter(lvl => (lvl.Level || "").toLowerCase().includes(query) || (lvl["Creator(s)"] || "").toLowerCase().includes(query)).sort((a, b) => {
+          const aVal = (a[sortKey] || "").toString();
+          const bVal = (b[sortKey] || "").toString();
+          return aVal.localeCompare(bVal, undefined, {
+            numeric: true,
+            sensitivity: 'base'
+          });
+        });
+        renderTable(filtered);
+      }
 
-    (async () => {
-      await fetchClears();
-      levels = await fetchLevels();
-      filterAndSort();
-    })();
-  </script>
-</body>
+      // --- Player Modal Logic ---
+      function openPlayerModal(player) {
+        closeAllModals();
+
+        const clears = [];
+        let totalPoints = 0;
+
+        // Collect the levels the player has cleared
+        levels.forEach(lvl => {
+          if ((clearsMap[lvl.ID] || []).includes(player)) {
+            const levelName = lvl.Level || `Unknown Level (ID ${lvl.ID})`;
+            clears.push({ 
+              id: lvl.ID, 
+              name: levelName, 
+              rank: lvl.Rank 
+            });
+            totalPoints += parseFloat(calculateListPoints(lvl.Rank));
+          }
+        });
+
+        // Fill modal header/stats
+        document.getElementById("playerName").textContent = player;
+        document.getElementById("playerClearsCount").textContent = clears.length;
+        document.getElementById("playerPoints").textContent = totalPoints.toFixed(2);
+
+        // Fill clears list with clickable levels
+        const clearsListEl = document.getElementById("playerClearsList");
+        clearsListEl.innerHTML = "";
+        clears.forEach(c => {
+          const li = document.createElement("li");
+
+          const a = document.createElement("a");
+          a.href = "#";
+          a.textContent = `${c.name} (Rank ${c.rank})`;
+          a.className = "text-blue-400 hover:underline";
+          a.onclick = (e) => {
+            e.preventDefault();
+            const lvl = levels.find(l => l.ID === c.id);
+            if (lvl) openLevelModal(lvl);
+          };
+
+          li.appendChild(a);
+          clearsListEl.appendChild(li);
+        });
+
+        document.getElementById("playerModal").classList.remove("hidden");
+      }
+
+      document.getElementById("closePlayerModal").onclick = () => {
+        document.getElementById("playerModal").classList.add("hidden");
+      };
+
+      function openLeaderboardModal() {
+        closeAllModals();
+
+        const playerStats = {};
+
+        levels.forEach(lvl => {
+          (clearsMap[lvl.ID] || []).forEach(player => {
+            if (!playerStats[player]) playerStats[player] = { points: 0, clears: 0 };
+            playerStats[player].points += parseFloat(calculateListPoints(lvl.Rank));
+            playerStats[player].clears += 1;
+          });
+        });
+
+        const sortedPlayers = Object.entries(playerStats)
+          .map(([name, stats]) => ({ name, ...stats }))
+          .sort((a, b) => b.points - a.points);
+
+        const lbTable = document.getElementById("leaderboardTable");
+        lbTable.innerHTML = "";
+
+        sortedPlayers.forEach((p, index) => {
+          const tr = document.createElement("tr");
+          tr.className = "hover:bg-gray-800 cursor-pointer";
+
+          tr.innerHTML = `
+            <td class="px-3 py-2">${index + 1}</td>
+            <td class="px-3 py-2 text-blue-400 hover:underline">${p.name}</td>
+            <td class="px-3 py-2">${p.points.toFixed(2)}</td>
+            <td class="px-3 py-2">${p.clears}</td>
+          `;
+
+          tr.onclick = () => openPlayerModal(p.name);
+
+          lbTable.appendChild(tr);
+        });
+
+        document.getElementById("leaderboardModal").classList.remove("hidden");
+      }
+
+
+      // Close button
+      document.getElementById("closeLeaderboardModal").onclick = () => {
+        document.getElementById("leaderboardModal").classList.add("hidden");
+      };
+
+      document.getElementById("leaderboardButton").onclick = openLeaderboardModal;
+
+
+
+      // Event listeners
+      searchInput.addEventListener("input", filterAndSort);
+      sortSelect.addEventListener("change", filterAndSort);
+      modeToggle.addEventListener("change", () => {
+        aestheticMode = modeToggle.checked;
+        filterAndSort();
+      });
+      (async () => {
+        await fetchClears();
+        levels = await fetchLevels();
+        filterAndSort();
+      })();
+    </script>
+  </body>
 </html>
