@@ -18,6 +18,7 @@
       </div>
     </div>
 
+
     <!-- Search + sort -->
     <div class="flex flex-wrap gap-4 mb-6">
       <input type="text" id="search" placeholder="Search levels..."
@@ -27,6 +28,9 @@
         <option value="Level">Sort by Level</option>
         <option value="Creator">Sort by Creator</option>
       </select>
+      <button id="rulesButton" class="p-2 rounded bg-gray-600 hover:bg-blue-700 text-white text-sm">
+        Rules
+    </button>
     </div>
 
     <!-- Table -->
@@ -62,6 +66,34 @@
     </div>
   </div>
 
+  <div id="rulesModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
+  <div class="bg-gray-900 rounded-2xl shadow-xl max-w-3xl w-full p-8 relative">
+    <button id="closeRules" class="absolute top-3 right-3 text-gray-400 hover:text-gray-200">&times;</button>
+    <h2 class="text-2xl font-bold mb-4">Rules for Levels</h2>
+    <ul class="list-disc list-inside text-gray-200 space-y-2">
+      <li>Level code or mod must be provided.</li>
+      <li>Level must be verified (provide replay or video evidence).</li>
+      <li>Gameplay must be "good". This means it must have gameplay that is repetitive, blind, or trolly and makes it unenjoyable.</li>
+      <li>Levels should preferrably be decorated.</li>
+      <li>Levels are usually rated by their decheesed version of one exists.</li>
+      <li>Long level names should include acronyms.</li>
+      <li>Buffed versions of levels, low quality, or repetitive levels will be placed on the Appel Challenge Level List.</li>
+    </ul>
+    <br>
+     <h2 class="text-2xl font-bold mb-4">Rules for Submissions</h2>
+    <ul class="list-disc list-inside text-gray-200 space-y-2">
+      <li>Replay evidence should be provided.</li>
+      <li>Use a vanilla or moderator-accepted version of Appel, or the mod the level came from.</li>
+      <li>Do not use external tools to cheat (TAS, macros, low FPS abuse, etc.) You must have played the level yourself by hand.</li>
+      <li>Modifying the code to gain an advantage is not allowed.</li>
+      <li>Video or replay code proof required for completions of Top 50 levels.</li>
+      <li>Replay continuation (starting the level at a checkpoint you have previously reached) is allowed as long as the level has no softlocks.</li>
+      <li>A video of the whole completion must be shown if replay continuation is used.</li>
+    </ul>
+  </div>
+</div>
+
+
   <script>
     const SHEET_ID = "1q01STuHSABJcptgHRmfFeXzkhFRtY6ymurO9uxkflfQ"; 
     const SHEET_NAME = "AHHL:E"; 
@@ -85,10 +117,23 @@
     const modalID = document.getElementById("modalID");
     const modalMedia = document.getElementById("modalMedia");
 
+    
+
     closeModal.addEventListener("click", () => modal.classList.add("hidden"));
     modal.addEventListener("click", (e) => {
       if (e.target === modal) modal.classList.add("hidden");
     });
+
+    const rulesButton = document.getElementById("rulesButton");
+    const rulesModal = document.getElementById("rulesModal");
+    const closeRules = document.getElementById("closeRules");
+
+    rulesButton.addEventListener("click", () => rulesModal.classList.remove("hidden"));
+    closeRules.addEventListener("click", () => rulesModal.classList.add("hidden"));
+    rulesModal.addEventListener("click", (e) => {
+    if (e.target === rulesModal) rulesModal.classList.add("hidden");
+    });
+
 
     async function fetchLevels() {
       try {
