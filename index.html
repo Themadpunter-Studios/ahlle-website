@@ -38,7 +38,6 @@
             <th class="px-3 py-2 text-left text-sm font-semibold">Level</th>
             <th class="px-3 py-2 text-left text-sm font-semibold">Creator(s)</th>
             <th class="px-3 py-2 text-left text-sm font-semibold">Difficulty</th>
-            <th class="px-3 py-2 text-left text-sm font-semibold">Video</th>
           </tr>
         </thead>
         <tbody id="levelTable" class="divide-y divide-gray-700"></tbody>
@@ -48,12 +47,15 @@
 
   <!-- Modal -->
   <div id="modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
-    <div class="bg-gray-900 rounded-2xl shadow-xl max-w-2xl w-full p-6 relative">
+    <div class="bg-gray-900 rounded-2xl shadow-xl max-w-4xl w-full p-10 relative">
       <button id="closeModal" class="absolute top-3 right-3 text-gray-400 hover:text-gray-200">&times;</button>
       <h2 id="modalTitle" class="text-2xl font-bold mb-4"></h2>
       <p><span class="font-semibold">AHHLE ID:</span> <span id="modalID"></span></p>
       <p><span class="font-semibold">Verifier:</span> <span id="modalVerifier"></span></p>
       <p><span class="font-semibold">CWR:</span> <span id="modalCWR"></span></p>
+      <p><span class="font-semibold">Level Code:</span> 
+      <span id="modalCode" class="cursor-pointer text-blue-400 underline block w-1/2 truncate" title="Click to copy">N/A</span>
+      </p>
       <p><span class="font-semibold">Notes:</span></p>
       <p id="modalNotes" class="text-gray-300 mt-2 mb-4"></p>
       <div id="modalMedia" class="mt-4"></div>
@@ -140,9 +142,6 @@
       </td>
       <td class="${compactClass}">${lvl["Creator(s)"] || ""}</td>
       <td class="${compactClass}">${lvl.Difficulty || ""}</td>
-      <td class="${compactClass}">
-        ${videoLink ? `<a href="${videoLink}" target="_blank" class="text-blue-400 underline">Watch</a>` : ""}
-      </td>
     `;
 
     row.addEventListener("click", () => {
@@ -151,11 +150,20 @@
       modalVerifier.textContent = lvl["Verifier/First Victor"] || "N/A";
       modalCWR.textContent = lvl["CWR (mostly from sr.c)"] || "N/A";
       modalNotes.textContent = lvl.Notes || "N/A";
+      modalCode.textContent = lvl["Level Code"] || "N/A";
+    modalCode.onclick = () => {
+    if (lvl.Code) {
+        navigator.clipboard.writeText(lvl.Code).then(() => {
+        modalCode.textContent = "Copied!";
+        setTimeout(() => modalCode.textContent = lvl.Code, 1000);
+        });
+    }
+    };
 
       if (videoLink) {
         const id = videoLink.split("v=")[1]?.split("&")[0];
         modalMedia.innerHTML = id
-          ? `<iframe width="100%" height="315" src="https://www.youtube.com/embed/${id}" frameborder="0" allowfullscreen></iframe>`
+          ? `<iframe width="560" height="315" src="https://www.youtube.com/embed/${id}" frameborder="0" allowfullscreen></iframe>`
           : `<a href="${videoLink}" target="_blank" class="text-blue-400 underline">Watch Video</a>`;
       } else {
         modalMedia.innerHTML = `<img src="https://via.placeholder.com/640x360?text=No+Video+Available" class="rounded">`;
