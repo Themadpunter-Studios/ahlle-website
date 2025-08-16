@@ -45,6 +45,7 @@
             <th class="px-3 py-2 text-left text-sm font-semibold">Level</th>
             <th class="px-3 py-2 text-left text-sm font-semibold">Creator(s)</th>
             <th class="px-3 py-2 text-left text-sm font-semibold">Difficulty</th>
+            <th class="px-3 py-2 text-left text-sm font-semibold">List Points</th>
           </tr>
         </thead>
         <tbody id="levelTable" class="divide-y divide-gray-700"></tbody>
@@ -53,21 +54,24 @@
   </div>
 
   <!-- Modal -->
-  <div id="modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
-    <div class="bg-gray-900 rounded-2xl shadow-xl max-w-4xl w-full p-10 relative">
-      <button id="closeModal" class="absolute top-3 right-3 text-gray-400 hover:text-gray-200">&times;</button>
-      <h2 id="modalTitle" class="text-2xl font-bold mb-4"></h2>
-      <p><span class="font-semibold">AHHLE ID:</span> <span id="modalID"></span></p>
-      <p><span class="font-semibold">Verifier:</span> <span id="modalVerifier"></span></p>
-      <p><span class="font-semibold">CWR:</span> <span id="modalCWR"></span></p>
-      <p><span class="font-semibold">Level Code:</span> 
+<div id="modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
+  <div class="bg-gray-900 rounded-2xl shadow-xl max-w-4xl w-full max-h-[80vh] p-10 relative overflow-y-auto">
+    <button id="closeModal" class="absolute top-3 right-3 text-gray-400 hover:text-gray-200">&times;</button>
+    <h2 id="modalTitle" class="text-2xl font-bold mb-4"></h2>
+    <p><span class="font-semibold">AHHLE ID:</span> <span id="modalID"></span></p>
+    <p><span class="font-semibold">Verifier:</span> <span id="modalVerifier"></span></p>
+    <p><span class="font-semibold">CWR:</span> <span id="modalCWR"></span></p>
+    <p><span class="font-semibold">Level Code:</span> 
       <span id="modalCode" class="cursor-pointer text-blue-400 underline block w-1/2 truncate" title="Click to copy">N/A</span>
-      </p>
-      <p><span class="font-semibold">Notes:</span></p>
-      <p id="modalNotes" class="text-gray-300 mt-2 mb-4"></p>
-      <div id="modalMedia" class="mt-4"></div>
-    </div>
+    </p>
+    <p><span class="font-semibold">Cleared By:</span></p>
+    <div id="modalClearedBy" class="text-gray-300 mt-1 mb-4"></div>
+    <p><span class="font-semibold">Notes:</span></p>
+    <p id="modalNotes" class="text-gray-300 mt-2 mb-4"></p>
+    <div id="modalMedia" class="mt-4"></div>
   </div>
+</div>
+
 
   <div id="rulesModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
   <div class="bg-gray-900 rounded-2xl shadow-xl max-w-3xl w-full p-8 relative">
@@ -137,6 +141,63 @@
     if (e.target === rulesModal) rulesModal.classList.add("hidden");
     });
 
+   let clearsMap = {}; // key: ID, value: array of usernames
+
+async function fetchClears() {
+    const CLEAR_SHEET_NAME = "data"; // replace with your sheet if different
+    const CLEAR_URL = `https://docs.google.com/spreadsheets/d/13S8NwstYejfWzZahhB_Ch8HrpsZLuIIZ161QwLM7fl4/gviz/tq?sheet=${CLEAR_SHEET_NAME}&tqx=out:json`;
+
+    try {
+        const res = await fetch(CLEAR_URL);
+        const text = await res.text();
+        const json = JSON.parse(text.substr(47).slice(0, -2));
+
+        json.table.rows.forEach(row => {
+    const id = row.c[8]?.v;  // keep ID in column A (index 0)
+    const cell = row.c[9];   // column J (index 9) for clears
+    let users = "";
+
+    if (cell) {
+        // If the cell has a value, get it as a string
+        if (typeof cell.v === "string") {
+            users = cell.v;
+        } else if (typeof cell.v === "number") {
+            users = String(cell.v);
+        } else {
+            // fallback
+            users = "";
+        }
+    }
+
+    if (id) {
+        clearsMap[id] = users.split(", ").map(u => u.trim()).filter(Boolean);
+    }
+});
+
+    } catch (err) {
+        console.error("Failed to fetch clears:", err);
+    }
+}
+    function calculateListPoints(rank) {
+  let points;
+  if (rank <= 100) {
+    // linear from 100 → 5
+    points = 100 - (95 * (rank - 1)) / 99;
+  } else if (rank <= 300) {
+    // linear from 5 → 1
+    points = 5 - (4 * (rank - 101)) / 199;
+  } else if (rank <= 450) {
+    // linear from 1 → 0.05
+    points = 1 - (0.95 * (rank - 301)) / 149;
+  } else {
+    points = 0;
+  }
+  return points.toFixed(2);
+}
+
+
+
+
 
     async function fetchLevels() {
       try {
@@ -178,7 +239,7 @@
     }
 
     // Fallback placeholder if not in Compact Mode
-    if (!thumb && !aestheticMode) thumb = "https://via.placeholder.com/120x90?text=No+Preview";
+    if (!thumb && !aestheticMode) thumb = "noimage.svg";
 
     const compactClass = aestheticMode ? "px-3 py-2" : "px-3 py-2"; // adjust if you want smaller padding in compact
 
@@ -190,6 +251,7 @@
       </td>
       <td class="${compactClass}">${lvl["Creator(s)"] || ""}</td>
       <td class="${compactClass}">${lvl.Difficulty || ""}</td>
+      <td class="${compactClass}">${calculateListPoints(lvl.Rank)}</td>
     `;
 
     row.addEventListener("click", () => {
@@ -199,6 +261,25 @@
       modalCWR.textContent = lvl["CWR (mostly from sr.c)"] || "N/A";
       modalNotes.textContent = lvl.Notes || "N/A";
       modalCode.textContent = lvl["Level Code"] || "N/A";
+      // Clear previous content
+        modalClearedBy.innerHTML = ""; 
+
+        const clears = clearsMap[lvl["ID"]] || [];
+
+        if (clears.length === 0) {
+            modalClearedBy.textContent = "None";
+        } else {
+            const ul = document.createElement("ul");
+            ul.className = "list-disc list-inside"; // optional Tailwind styling
+            clears.forEach(user => {
+                const li = document.createElement("li");
+                li.textContent = user;
+                ul.appendChild(li);
+            });
+            modalClearedBy.appendChild(ul);
+        }
+
+
     modalCode.onclick = () => {
     if (lvl.Code) {
         navigator.clipboard.writeText(lvl.Code).then(() => {
@@ -214,7 +295,7 @@
           ? `<iframe width="560" height="315" src="https://www.youtube.com/embed/${id}" frameborder="0" allowfullscreen></iframe>`
           : `<a href="${videoLink}" target="_blank" class="text-blue-400 underline">Watch Video</a>`;
       } else {
-        modalMedia.innerHTML = `<img src="https://via.placeholder.com/640x360?text=No+Video+Available" class="rounded">`;
+        modalMedia.innerHTML = ``;
       }
 
       modal.classList.remove("hidden");
@@ -257,6 +338,7 @@ modeToggle.addEventListener("change", () => {
 });
 
     (async () => {
+      await fetchClears();
       levels = await fetchLevels();
       filterAndSort();
     })();
