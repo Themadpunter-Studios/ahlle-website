@@ -3,7 +3,10 @@ name: Image Scraper
 on:
   schedule:
     - cron: "0 * * * *"  # run every hour
-  workflow_dispatch:     # allow manual runs
+  workflow_dispatch:
+
+permissions:
+  contents: write  # 👈 allow pushing commits
 
 jobs:
   scrape:
