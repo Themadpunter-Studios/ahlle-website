@@ -1,14 +1,32 @@
+import requests
 from openpyxl import load_workbook
 from pathlib import Path
 from PIL import Image
 import io
 
-# Paths
-excel_file = "Appel Level Lists (V2).xlsx"
+# === CONFIG ===
+# Replace with your Google Sheet ID and sheet GID
+SHEET_ID = "1q01STuHSABJcptgHRmfFeXzkhFRtY6ymurO9uxkflfQ"
+SHEET_GID = "0"  # usually 0 for the first sheet
+
+# This URL downloads the sheet as an Excel file
+EXCEL_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=xlsx&gid={SHEET_GID}"
+
 output_folder = Path("thumbnails")
 output_folder.mkdir(exist_ok=True)
 
-# Load workbook
+# === DOWNLOAD THE SHEET ===
+print("Downloading sheet...")
+response = requests.get(EXCEL_URL)
+response.raise_for_status()
+
+excel_file = "sheet.xlsx"
+with open(excel_file, "wb") as f:
+    f.write(response.content)
+
+print("Downloaded sheet to", excel_file)
+
+# === LOAD WORKBOOK ===
 wb = load_workbook(excel_file)
 ws = wb.active  # or wb['SheetName']
 
@@ -28,11 +46,17 @@ for row in range(2, 1000):  # D2:D999, A2:A999
     if not img:
         continue
 
+    img_path = output_folder / f"{filename}.png"
+
+    # Skip if file already exists
+    if img_path.exists():
+        print(f"Skipping {img_path} (already exists)")
+        continue
+
     # Convert BytesIO to PIL Image
     image_data = img._data()  # returns BytesIO
     pil_img = Image.open(io.BytesIO(image_data))
 
     # Save image as PNG
-    img_path = output_folder / f"{filename}.png"
     pil_img.save(img_path)
     print(f"Saved {img_path}")
