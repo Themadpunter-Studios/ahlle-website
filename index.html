@@ -33,6 +33,9 @@
         <button id="leaderboardButton" class="p-2 rounded bg-gray-600 hover:bg-blue-700 text-white text-sm ml-2">
           Leaderboard
         </button>
+        <a href="https://forms.gle/1Vvxy3wDf84eug88A" class="p-2 rounded bg-gray-600 hover:bg-blue-700 text-white text-sm">Submit Levels</a>
+        <a href="https://forms.gle/L7cniPsjotFzZdSb7" class="p-2 rounded bg-gray-600 hover:bg-blue-700 text-white text-sm">Submit Completions</a>
+
 
       </div>
       <!-- Table -->
@@ -56,6 +59,11 @@
       <div class="bg-gray-900 rounded-2xl shadow-xl max-w-4xl w-full max-h-[80vh] p-10 relative overflow-y-auto">
         <button id="closeModal" class="absolute top-3 right-3 text-gray-400 hover:text-gray-200">&times;</button>
         <h2 id="modalTitle" class="text-2xl font-bold mb-4"></h2>
+        <p><strong>Project:</strong> <span id="modalProject">N/A</span></p>
+        <p><strong>Difficulty:</strong> <span id="modalDifficulty">N/A</span></p>
+        <p><strong>Rank:</strong> <span id="modalRank">N/A</span></p>
+        <p><strong>List Points:</strong> <span id="modalPoints">N/A</span></p>
+
         <p>
           <span class="font-semibold">AHHLE ID:</span>
           <span id="modalID"></span>
@@ -240,19 +248,22 @@
       }
 
       function openLevelModal(lvl) {
-        closeAllModals();
+        closeAllModals(); // close others first
 
-        const videoLink = lvl.Video && lvl.Video.trim() !== "-" ? lvl.Video : "";
-
-        // Fill modal fields
         modalTitle.textContent = lvl.Level || "Unknown Level";
-        modalID.textContent = lvl["ID"] || "N/A";
+        modalID.textContent = lvl.ID || "N/A";
         modalVerifier.textContent = lvl["Verifier/First Victor"] || "N/A";
         modalCWR.textContent = lvl["CWR (mostly from sr.c)"] || "N/A";
         modalNotes.textContent = lvl.Notes || "N/A";
         modalCode.textContent = lvl["Level Code"] || "N/A";
 
-        // Clears list with clickable players
+        // ✅ New fields
+        document.getElementById("modalProject").textContent = lvl["Project"] || "N/A";
+        document.getElementById("modalDifficulty").textContent = lvl["Difficulty"] || "N/A";
+        document.getElementById("modalRank").textContent = lvl["Rank"] || "N/A";
+        document.getElementById("modalPoints").textContent = calculateListPoints(lvl["Rank"])
+
+        // Cleared by list
         modalClearedBy.innerHTML = "";
         (clearsMap[lvl["ID"]] || []).forEach(user => {
           const li = document.createElement("li");
@@ -268,29 +279,30 @@
           modalClearedBy.appendChild(li);
         });
 
-        // Copy level code
+        // Copy code logic
         modalCode.onclick = () => {
-          if (lvl["Level Code"]) {
-            navigator.clipboard.writeText(lvl["Level Code"]).then(() => {
+          if (lvl.Code) {
+            navigator.clipboard.writeText(lvl.Code).then(() => {
               modalCode.textContent = "Copied!";
-              setTimeout(() => modalCode.textContent = lvl["Level Code"], 1000);
+              setTimeout(() => modalCode.textContent = lvl.Code, 1000);
             });
           }
         };
 
-        // Video / thumbnail
-        if (videoLink) {
+        // Video
+        if (lvl.Video) {
+          const videoLink = lvl.Video;
           const id = videoLink.split("v=")[1]?.split("&")[0];
           modalMedia.innerHTML = id
             ? `<iframe width="560" height="315" src="https://www.youtube.com/embed/${id}" frameborder="0" allowfullscreen></iframe>`
             : `<a href="${videoLink}" target="_blank" class="text-blue-400 underline">Watch Video</a>`;
         } else {
-          modalMedia.innerHTML = "";
+          modalMedia.innerHTML = ``;
         }
 
-        // Show modal
         modal.classList.remove("hidden");
       }
+
 
       function closeAllModals() {
         document.getElementById("modal").classList.add("hidden");
