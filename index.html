@@ -36,6 +36,7 @@
           <option value="Creator">Sort by Creator</option>
         </select>
         <button id="rulesButton" class="p-2 rounded bg-gray-600 hover:bg-blue-700 text-white text-sm"> Rules </button>
+        <button id="infoButton" class="p-2 rounded bg-gray-600 hover:bg-blue-700 text-white text-sm"> Info </button>
         <button id="leaderboardButton" class="p-2 rounded bg-gray-600 hover:bg-blue-700 text-white text-sm ml-2">
           Leaderboard
         </button>
@@ -152,6 +153,13 @@
         </ul>
       </div>
     </div>
+    <div id="infoModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden z-50">
+      <div class="bg-gray-900 rounded-2xl shadow-xl max-w-3xl w-full p-8 relative">
+        <button id="closeInfo" class="absolute top-3 right-3 text-gray-400 hover:text-gray-200">&times;</button>
+        <h2 class="text-2xl font-bold mb-4">AHHL:E Info</h2>
+        <p>Add More Info Here</p>
+      </div>
+    </div>
     <script>
       const SHEET_ID = "1q01STuHSABJcptgHRmfFeXzkhFRtY6ymurO9uxkflfQ";
       let currentList = "AHLL"; // "AHLL" or "AILL"
@@ -180,8 +188,12 @@
       const rulesButton = document.getElementById("rulesButton");
       const rulesModal = document.getElementById("rulesModal");
       const closeRules = document.getElementById("closeRules");
+      const infoModal = document.getElementById("infoModal");
+      const closeInfo = document.getElementById("closeInfo");
       rulesButton.addEventListener("click", () => rulesModal.classList.remove("hidden"));
+      infoButton.addEventListener("click", () => infoModal.classList.remove("hidden"));
       closeRules.addEventListener("click", () => rulesModal.classList.add("hidden"));
+      closeInfo.addEventListener("click", () => infoModal.classList.add("hidden"));
       rulesModal.addEventListener("click", (e) => {
         if (e.target === rulesModal) rulesModal.classList.add("hidden");
       });
@@ -272,14 +284,16 @@
         const project = lvl.Project || "N/A";
         const difficulty = lvl.Difficulty || "N/A";
 
+
         modalTitle.textContent = levelName;
         modalID.textContent = id;
         if (currentList === "AHLL") {
             modalVerifier.textContent = verifier;
             modalCWR.textContent = cwr;
             modalVerifier.parentElement.style.display = "block";
-            ModalCWR.parentElement.style.display = "block";
+            modalCWR.parentElement.style.display = "block";
         } else {
+            modalCWR.textContent = cwr;
             modalVerifier.parentElement.style.display = "none";
             modalCWR.parentElement.style.display = "none";
         }
