@@ -21,6 +21,12 @@
       </div>
       <p>The Appel Hardest Levels List: Extended is a ranking of all difficult Appel levels. This website accesses the original <a href="https://docs.google.com/spreadsheets/d/1q01STuHSABJcptgHRmfFeXzkhFRtY6ymurO9uxkflfQ/edit">Google Sheet</a> where the AHLL:E is stored and shows the levels in a sortable format. </p>
       <br>
+      <select id="listSelect" class="p-2 rounded bg-gray-800 border border-gray-700 text-sm">
+        <option value="AHLL">AHLL:E</option>
+        <option value="AILL">AILL</option>
+      </select>
+      <br><br>
+
       <!-- Search + sort -->
       <div class="flex flex-wrap gap-4 mb-6">
         <input type="text" id="search" placeholder="Search levels..." class="p-2 rounded bg-gray-800 border border-gray-700 text-sm w-64">
@@ -80,7 +86,7 @@
           <span class="font-semibold">Level Code:</span>
           <span id="modalCode" class="cursor-pointer text-blue-400 underline block w-1/2 truncate" title="Click to copy">N/A</span>
         </p>
-        <p>
+        <p id="clearedBy">
           <span class="font-semibold">Cleared By:</span>
         </p>
         <div id="modalClearedBy" class="text-gray-300 mt-1 mb-4"></div>
@@ -148,8 +154,7 @@
     </div>
     <script>
       const SHEET_ID = "1q01STuHSABJcptgHRmfFeXzkhFRtY6ymurO9uxkflfQ";
-      const SHEET_NAME = "AHHL:E";
-      const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${SHEET_NAME}&tqx=out:json`;
+      let currentList = "AHLL"; // "AHLL" or "AILL"
       let levels = [];
       let aestheticMode = false;
       const table = document.getElementById("levelTable");
@@ -165,6 +170,9 @@
       const modalNotes = document.getElementById("modalNotes");
       const modalID = document.getElementById("modalID");
       const modalMedia = document.getElementById("modalMedia");
+      const modalClearedBy = document.getElementById("modalClearedBy");
+      const modalCode = document.getElementById("modalCode");
+
       closeModal.addEventListener("click", () => modal.classList.add("hidden"));
       modal.addEventListener("click", (e) => {
         if (e.target === modal) modal.classList.add("hidden");
@@ -228,8 +236,11 @@
         }
         return points.toFixed(2);
       }
-      async function fetchLevels() {
+
+      async function fetchLevels(list = "AHLL") {
         try {
+          let SHEET_NAME = list === "AILL" ? "AILL" : "AHHL:E";
+          const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?sheet=${SHEET_NAME}&tqx=out:json`;
           const res = await fetch(URL);
           const text = await res.text();
           const json = JSON.parse(text.substr(47).slice(0, -2));
@@ -247,61 +258,93 @@
         }
       }
 
+
       function openLevelModal(lvl) {
-        closeAllModals(); // close others first
+        closeAllModals();
 
-        modalTitle.textContent = lvl.Level || "Unknown Level";
-        modalID.textContent = lvl.ID || "N/A";
-        modalVerifier.textContent = lvl["Verifier/First Victor"] || "N/A";
-        modalCWR.textContent = lvl["CWR (mostly from sr.c)"] || "N/A";
-        modalNotes.textContent = lvl.Notes || "N/A";
-        modalCode.textContent = lvl["Level Code"] || "N/A";
+        const rank = lvl.Rank || lvl["Rank"] || "N/A";
+        const id = lvl.ID || lvl["ID"] || "N/A";
+        const levelName = lvl.Level || lvl["Level"] || "Unknown Level";
+        const verifier = lvl["Verifier/First Victor"] || "N/A";
+        const cwr = lvl["CWR (mostly from sr.c)"] || "N/A";
+        const notes = lvl.Notes || "N/A";
+        const code = lvl["Level Code"] || "N/A";
+        const project = lvl.Project || "N/A";
+        const difficulty = lvl.Difficulty || "N/A";
 
-        // ✅ New fields
-        document.getElementById("modalProject").textContent = lvl["Project"] || "N/A";
-        document.getElementById("modalDifficulty").textContent = lvl["Difficulty"] || "N/A";
-        document.getElementById("modalRank").textContent = lvl["Rank"] || "N/A";
-        document.getElementById("modalPoints").textContent = calculateListPoints(lvl["Rank"])
+        modalTitle.textContent = levelName;
+        modalID.textContent = id;
+        if (currentList === "AHLL") {
+            modalVerifier.textContent = verifier;
+            modalCWR.textContent = cwr;
+            modalVerifier.parentElement.style.display = "block";
+            ModalCWR.parentElement.style.display = "block";
+        } else {
+            modalVerifier.parentElement.style.display = "none";
+            modalCWR.parentElement.style.display = "none";
+        }
+        
+        modalNotes.textContent = notes;
+        modalCode.textContent = code;
+        document.getElementById("modalProject").textContent = project;
+        document.getElementById("modalDifficulty").textContent = difficulty;
+        document.getElementById("modalRank").textContent = rank;
 
-        // Cleared by list
-        modalClearedBy.innerHTML = "";
-        (clearsMap[lvl["ID"]] || []).forEach(user => {
-          const li = document.createElement("li");
-          const a = document.createElement("a");
-          a.href = "#";
-          a.textContent = user;
-          a.className = "text-blue-500 hover:underline";
-          a.onclick = (e) => {
-            e.preventDefault();
-            openPlayerModal(user);
-          };
-          li.appendChild(a);
-          modalClearedBy.appendChild(li);
-        });
+        if (currentList === "AHLL") {
+            document.getElementById("modalPoints").textContent = calculateListPoints(rank);
+            document.getElementById("modalPoints").parentElement.style.display = "block";
+        } else {
+            document.getElementById("modalPoints").parentElement.style.display = "none";
+        }
+
+        // Cleared By section
+        if (currentList === "AHLL") {
+          modalClearedBy.innerHTML = "";
+          (clearsMap[lvl["ID"]] || []).forEach(user => {
+            const li = document.createElement("li");
+            const a = document.createElement("a");
+            a.href = "#";
+            a.textContent = user;
+            a.className = "text-blue-500 hover:underline";
+            a.onclick = (e) => {
+              e.preventDefault();
+              openPlayerModal(user);
+            };
+            li.appendChild(a);
+            modalClearedBy.appendChild(li);
+          });
+          modalClearedBy.style.display = "block";
+          document.getElementById("clearedBy").style.display = "block";
+
+        } else {
+          // Hide for AILL
+          modalClearedBy.innerHTML = "<li>Nobody</li>";
+          modalClearedBy.style.display = "none";
+          document.getElementById("clearedBy").style.display = "none";
+
+        }
+
+        // Video
+        const videoLink = lvl.Video || "";
+        const idMatch = videoLink.match(/(?:v=|youtu\.be\/)([\w-]+)/);
+        document.getElementById("modalMedia").innerHTML = idMatch
+            ? `<iframe width="560" height="315" src="https://www.youtube.com/embed/${idMatch[1]}" frameborder="0" allowfullscreen></iframe>`
+            : "";
 
         // Copy code logic
         modalCode.onclick = () => {
-          if (lvl.Code) {
-            navigator.clipboard.writeText(lvl.Code).then(() => {
-              modalCode.textContent = "Copied!";
-              setTimeout(() => modalCode.textContent = lvl.Code, 1000);
-            });
-          }
+            if (code !== "N/A") {
+                navigator.clipboard.writeText(code).then(() => {
+                    modalCode.textContent = "Copied!";
+                    setTimeout(() => modalCode.textContent = code, 1000);
+                });
+            }
         };
 
-        // Video
-        if (lvl.Video) {
-          const videoLink = lvl.Video;
-          const id = videoLink.split("v=")[1]?.split("&")[0];
-          modalMedia.innerHTML = id
-            ? `<iframe width="560" height="315" src="https://www.youtube.com/embed/${id}" frameborder="0" allowfullscreen></iframe>`
-            : `<a href="${videoLink}" target="_blank" class="text-blue-400 underline">Watch Video</a>`;
-        } else {
-          modalMedia.innerHTML = ``;
-        }
-
         modal.classList.remove("hidden");
-      }
+    }
+
+
 
 
       function closeAllModals() {
@@ -321,17 +364,28 @@
           row.className = "hover:bg-gray-800 cursor-pointer";
           const videoLink = lvl.Video && lvl.Video.trim() !== "-" ? lvl.Video : "";
           let thumb = "";
-          // Always show thumbnail if NOT in Compact Mode
-          if (!aestheticMode && lvl["ID"]) {
-            thumb = `thumbnails/${lvl["ID"]}.0.png`;
+          if (currentList === "AILL") {
+            if (!aestheticMode && lvl["ID"]) {
+              thumb = `aill_thumbnails/${lvl["ID"]}.0.png`;
+            }
+            if (!thumb && !aestheticMode && videoLink.includes("youtube")) {
+              const id = videoLink.split("v=")[1]?.split("&")[0];
+              thumb = id ? `https://img.youtube.com/vi/${id}/mqdefault.jpg` : "";
+            }
+            if (!thumb && !aestheticMode) thumb = "noimage.svg";
+          } else {
+            if (!aestheticMode && lvl["ID"]) {
+              thumb = `thumbnails/${lvl["ID"]}.0.png`;
+            }
+            if (!thumb && !aestheticMode && videoLink.includes("youtube")) {
+              const id = videoLink.split("v=")[1]?.split("&")[0];
+              thumb = id ? `https://img.youtube.com/vi/${id}/mqdefault.jpg` : "";
+            }
+            if (!thumb && !aestheticMode) thumb = "noimage.svg";
           }
-          // Fallback to YouTube thumbnail if not in Compact Mode
-          if (!thumb && !aestheticMode && videoLink.includes("youtube")) {
-            const id = videoLink.split("v=")[1]?.split("&")[0];
-            thumb = id ? `https://img.youtube.com/vi/${id}/mqdefault.jpg` : "";
-          }
-          // Fallback placeholder if not in Compact Mode
-          if (!thumb && !aestheticMode) thumb = "noimage.svg";
+
+          
+
           const compactClass = aestheticMode ? "px-3 py-2" : "px-3 py-2"; // adjust if you want smaller padding in compact
           row.innerHTML = `
       
@@ -344,7 +398,9 @@
 									</td>
 									<td class="${compactClass}">${lvl["Creator(s)"] || ""}</td>
 									<td class="${compactClass}">${lvl.Difficulty || ""}</td>
-									<td class="${compactClass}">${calculateListPoints(lvl.Rank)}</td>
+                  ${currentList === "AHLL" 
+  ? `<td class="${compactClass}">${calculateListPoints(lvl.Rank)}</td>` 
+  : `<td class="${compactClass}">-</td>`}
     `;
           row.addEventListener("click", () => openLevelModal(lvl));
 
@@ -422,6 +478,13 @@
       document.getElementById("closePlayerModal").onclick = () => {
         document.getElementById("playerModal").classList.add("hidden");
       };
+
+      document.getElementById("listSelect").addEventListener("change", async (e) => {
+        currentList = e.target.value;
+        levels = await fetchLevels(currentList);
+        filterAndSort();
+      });
+
 
       function openLeaderboardModal() {
         closeAllModals();
