@@ -35,5 +35,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add thumbnails/*.png || true
+          git add aill_thumbnails/*.png || true
           git commit -m "Update thumbnails [skip ci]" || echo "No changes to commit"
           git push
